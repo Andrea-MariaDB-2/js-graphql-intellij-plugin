@@ -18,7 +18,20 @@ import com.intellij.lang.jsgraphql.ide.notifications.GraphQLNotificationUtil;
 import com.intellij.lang.jsgraphql.ide.project.graphqlconfig.GraphQLConfigManager;
 import com.intellij.lang.jsgraphql.ide.project.graphqlconfig.model.GraphQLConfigEndpoint;
 import com.intellij.lang.jsgraphql.ide.project.graphqlconfig.model.GraphQLConfigVariableAwareEndpoint;
+import com.intellij.lang.jsgraphql.schema.GraphQLRegistryInfo;
+import com.intellij.lang.jsgraphql.schema.GraphQLSchemaInfo;
 import com.intellij.lang.jsgraphql.schema.GraphQLSchemaKeys;
+import com.intellij.lang.jsgraphql.types.GraphQLError;
+import com.intellij.lang.jsgraphql.types.introspection.IntrospectionQuery;
+import com.intellij.lang.jsgraphql.types.language.Description;
+import com.intellij.lang.jsgraphql.types.language.Document;
+import com.intellij.lang.jsgraphql.types.language.Node;
+import com.intellij.lang.jsgraphql.types.language.ScalarTypeDefinition;
+import com.intellij.lang.jsgraphql.types.schema.idl.SchemaParser;
+import com.intellij.lang.jsgraphql.types.schema.idl.SchemaPrinter;
+import com.intellij.lang.jsgraphql.types.schema.idl.UnExecutableSchemaGenerator;
+import com.intellij.lang.jsgraphql.types.schema.idl.errors.SchemaProblem;
+import com.intellij.lang.jsgraphql.types.util.EscapeUtil;
 import com.intellij.lang.jsgraphql.v1.ide.project.JSGraphQLLanguageUIProjectService;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -55,10 +68,6 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.lang.jsgraphql.types.introspection.IntrospectionQuery;
-import com.intellij.lang.jsgraphql.types.language.*;
-import com.intellij.lang.jsgraphql.types.schema.idl.*;
-import com.intellij.lang.jsgraphql.types.util.EscapeUtil;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -81,10 +90,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.lang.jsgraphql.v1.ide.project.JSGraphQLLanguageUIProjectService.setHeadersFromOptions;
 
@@ -252,9 +258,24 @@ public class GraphQLIntrospectionService implements Disposable {
             .includeScalarTypes(false)
             .includeSchemaDefinition(true)
             .includeDirectives(directive -> !DEFAULT_DIRECTIVES.contains(directive.getName()));
-        final TypeDefinitionRegistry registry = new SchemaParser().buildRegistry(schemaDefinition);
 
-        final StringBuilder sb = new StringBuilder(new SchemaPrinter(options).print(UnExecutableSchemaGenerator.makeUnExecutableSchema(registry)));
+        GraphQLRegistryInfo registryInfo = new GraphQLRegistryInfo(
+            new SchemaParser().buildRegistry(schemaDefinition), Collections.emptyList(), true);
+        GraphQLSchemaInfo schemaInfo = new GraphQLSchemaInfo(
+            UnExecutableSchemaGenerator.makeUnExecutableSchema(registryInfo.getTypeDefinitionRegistry()),
+            Collections.emptyList(),
+            registryInfo
+        );
+
+        if (schemaInfo.hasErrors()) {
+            List<GraphQLError> errors = schemaInfo.getErrors();
+            for (GraphQLError error : errors) {
+                LOG.warn(error.getMessage());
+            }
+            throw new SchemaProblem(errors);
+        }
+
+        final StringBuilder sb = new StringBuilder(new SchemaPrinter(options).print(schemaInfo.getSchema()));
 
         // graphql-java only prints scalars that are used by fields since it visits fields to discover types, so add the scalars here manually
         final Set<String> knownScalars = Sets.newHashSet();
@@ -277,7 +298,12 @@ public class GraphQLIntrospectionService implements Disposable {
                 }
             }
         }
-        return sb.toString();
+
+        String sdl = sb.toString();
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(sdl);
+        }
+        return sdl;
     }
 
     @SuppressWarnings("unchecked")
@@ -378,13 +404,13 @@ public class GraphQLIntrospectionService implements Disposable {
                     CodeStyleManager.getInstance(myProject).reformat(psiFile);
                 }
             });
-        } catch (IOException ioe) {
-            LOG.info(ioe);
+        } catch (IOException e) {
+            LOG.info(e);
             Notifications.Bus.notify(new Notification(
                 GraphQLNotificationUtil.NOTIFICATION_GROUP_ID,
                 GraphQLBundle.message("graphql.notification.error.title"),
                 GraphQLBundle.message("graphql.notification.unable.to.create.file",
-                    outputFileName, introspectionSourceFile.getParent().getPath(), GraphQLNotificationUtil.formatExceptionMessage(ioe)),
+                    outputFileName, introspectionSourceFile.getParent().getPath(), GraphQLNotificationUtil.formatExceptionMessage(e)),
                 NotificationType.ERROR
             ));
         }
