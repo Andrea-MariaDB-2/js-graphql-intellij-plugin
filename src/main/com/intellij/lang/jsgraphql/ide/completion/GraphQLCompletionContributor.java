@@ -25,6 +25,7 @@ import com.intellij.lang.jsgraphql.psi.GraphQLInputValueDefinition;
 import com.intellij.lang.jsgraphql.psi.*;
 import com.intellij.lang.jsgraphql.psi.impl.GraphQLDirectivesAware;
 import com.intellij.lang.jsgraphql.psi.impl.GraphQLObjectValueImpl;
+import com.intellij.lang.jsgraphql.schema.GraphQLExternalTypeDefinitionsProvider;
 import com.intellij.lang.jsgraphql.schema.GraphQLSchemaProvider;
 import com.intellij.lang.jsgraphql.schema.GraphQLSchemaUtil;
 import com.intellij.lang.jsgraphql.types.introspection.Introspection;
@@ -55,7 +56,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.lang.jsgraphql.GraphQLConstants.__DIRECTIVE_LOCATION_ENUM;
+import static com.intellij.lang.jsgraphql.GraphQLConstants.Schema.__DIRECTIVE_LOCATION_ENUM;
 import static com.intellij.patterns.PlatformPatterns.psiComment;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -507,7 +508,7 @@ public class GraphQLCompletionContributor extends CompletionContributor {
                 final Set<String> currentLocations = Sets.newHashSet();
                 directiveLocations.getDirectiveLocationList().forEach(location -> currentLocations.add(location.getText()));
                 final GraphQLFile builtInSchema = ObjectUtils.tryCast(
-                    GraphQLPsiSearchHelper.getInstance(completionElement.getProject()).getBuiltInSchema(), GraphQLFile.class);
+                    GraphQLExternalTypeDefinitionsProvider.getInstance(completionElement.getProject()).getBuiltInSchema(), GraphQLFile.class);
                 if (builtInSchema == null) {
                     return;
                 }
@@ -1106,15 +1107,6 @@ public class GraphQLCompletionContributor extends CompletionContributor {
             psiElement(GraphQLElementTypes.VARIABLE_NAME),
             psiElement(GraphQLElementTypes.NAME).inside(GraphQLEnumValue.class)
         ).inside(GraphQLArgument.class), provider);
-    }
-
-
-    @Override
-    public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
-        if (typeChar == '@' || typeChar == '$') {
-            return true;
-        }
-        return super.invokeAutoPopup(position, typeChar);
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")

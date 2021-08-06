@@ -1,13 +1,14 @@
 /*
-  Copyright (c) 2015-present, Jim Kynde Meyer
-  All rights reserved.
-  <p>
-  This source code is licensed under the MIT license found in the
-  LICENSE file in the root directory of this source tree.
+ *  Copyright (c) 2015-present, Jim Kynde Meyer
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the MIT license found in the
+ *  LICENSE file in the root directory of this source tree.
  */
 package com.intellij.lang.jsgraphql.ide.documentation;
 
 import com.intellij.lang.documentation.DocumentationProviderEx;
+import com.intellij.lang.jsgraphql.GraphQLConstants;
 import com.intellij.lang.jsgraphql.endpoint.psi.JSGraphQLEndpointDocumentationAware;
 import com.intellij.lang.jsgraphql.endpoint.psi.JSGraphQLEndpointFile;
 import com.intellij.lang.jsgraphql.psi.GraphQLFieldDefinition;
@@ -34,7 +35,7 @@ import static com.intellij.lang.documentation.DocumentationMarkup.*;
 
 public class GraphQLDocumentationProvider extends DocumentationProviderEx {
 
-    private final static String GRAPHQL_DOC_PREFIX = "GraphQL";
+    private final static String GRAPHQL_DOC_PREFIX = GraphQLConstants.GraphQL;
 
     @Nullable
     @Override

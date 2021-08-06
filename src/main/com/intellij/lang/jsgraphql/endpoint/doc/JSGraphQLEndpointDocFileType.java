@@ -1,18 +1,18 @@
-/**
- * Copyright (c) 2015-present, Jim Kynde Meyer
- * All rights reserved.
- * <p>
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
+/*
+ *  Copyright (c) 2015-present, Jim Kynde Meyer
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the MIT license found in the
+ *  LICENSE file in the root directory of this source tree.
  */
 package com.intellij.lang.jsgraphql.endpoint.doc;
 
 import javax.swing.*;
 
+import com.intellij.lang.jsgraphql.icons.GraphQLIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.intellij.lang.jsgraphql.icons.JSGraphQLIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 
 public class JSGraphQLEndpointDocFileType extends LanguageFileType {
@@ -44,6 +44,6 @@ public class JSGraphQLEndpointDocFileType extends LanguageFileType {
 	@Nullable
 	@Override
 	public Icon getIcon() {
-		return JSGraphQLIcons.Files.GraphQLSchema;
+		return GraphQLIcons.Files.GraphQLSchema;
 	}
 }

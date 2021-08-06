@@ -1,15 +1,15 @@
-/**
- * Copyright (c) 2015-present, Jim Kynde Meyer
- * All rights reserved.
- * <p>
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
+/*
+ *  Copyright (c) 2015-present, Jim Kynde Meyer
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the MIT license found in the
+ *  LICENSE file in the root directory of this source tree.
  */
 package com.intellij.lang.jsgraphql.endpoint.psi;
 
 import com.intellij.ide.IconProvider;
 import com.intellij.lang.jsgraphql.endpoint.JSGraphQLEndpointLanguage;
-import com.intellij.lang.jsgraphql.icons.JSGraphQLIcons;
+import com.intellij.lang.jsgraphql.icons.GraphQLIcons;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -37,35 +37,35 @@ public class JSGraphQLEndpointIconProvider extends IconProvider {
             return getTypeDefinitionIcon((JSGraphQLEndpointNamedTypeDefinition) element);
         }
         if (element instanceof JSGraphQLEndpointProperty) {
-            return JSGraphQLIcons.Schema.Field;
+            return GraphQLIcons.Schema.Field;
         }
         if (element instanceof JSGraphQLEndpointInputValueDefinition) {
-            return JSGraphQLIcons.Schema.Attribute;
+            return GraphQLIcons.Schema.Attribute;
         }
         if(element instanceof JSGraphQLEndpointImportDeclaration) {
-            return JSGraphQLIcons.Files.GraphQLSchema;
+            return GraphQLIcons.Files.GraphQLSchema;
         }
         return null;
     }
 
     private Icon getTypeDefinitionIcon(JSGraphQLEndpointNamedTypeDefinition typeDefinition) {
         if (typeDefinition instanceof JSGraphQLEndpointObjectTypeDefinition) {
-            return JSGraphQLIcons.Schema.Type;
+            return GraphQLIcons.Schema.Type;
         }
         if (typeDefinition instanceof JSGraphQLEndpointInterfaceTypeDefinition) {
-            return JSGraphQLIcons.Schema.Interface;
+            return GraphQLIcons.Schema.Interface;
         }
         if (typeDefinition instanceof JSGraphQLEndpointInputObjectTypeDefinition) {
-            return JSGraphQLIcons.Schema.Interface;
+            return GraphQLIcons.Schema.Interface;
         }
         if (typeDefinition instanceof JSGraphQLEndpointEnumTypeDefinition) {
-            return JSGraphQLIcons.Schema.Enum;
+            return GraphQLIcons.Schema.Enum;
         }
         if (typeDefinition instanceof JSGraphQLEndpointScalarTypeDefinition) {
-            return JSGraphQLIcons.Schema.Scalar;
+            return GraphQLIcons.Schema.Scalar;
         }
         if (typeDefinition instanceof JSGraphQLEndpointUnionTypeDefinition) {
-            return JSGraphQLIcons.Schema.Type;
+            return GraphQLIcons.Schema.Type;
         }
         return null;
     }

@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (c) 2015-present, Jim Kynde Meyer
  *  All rights reserved.
  *
@@ -7,9 +7,9 @@
  */
 package com.intellij.lang.jsgraphql.v1.ide.actions;
 
-import com.intellij.lang.jsgraphql.icons.JSGraphQLIcons;
+import com.intellij.lang.jsgraphql.icons.GraphQLIcons;
+import com.intellij.lang.jsgraphql.ide.project.GraphQLUIProjectService;
 import com.intellij.lang.jsgraphql.v1.ide.endpoints.JSGraphQLEndpointsModel;
-import com.intellij.lang.jsgraphql.v1.ide.project.JSGraphQLLanguageUIProjectService;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -25,14 +25,14 @@ public class JSGraphQLToggleVariablesAction extends ToggleAction {
     public final static Key<Boolean> JS_GRAPH_QL_VARIABLES_MODEL = Key.create("JSGraphQLVariablesModel");
 
     public JSGraphQLToggleVariablesAction() {
-        super("Toggle variables editor", "Toggles the GraphQL variables editor", JSGraphQLIcons.UI.GraphQLVariables);
+        super("Toggle variables editor", "Toggles the GraphQL variables editor", GraphQLIcons.UI.GraphQLVariables);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
         final Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
         if(editor != null) {
-            final JSGraphQLEndpointsModel endpointsModel = editor.getUserData(JSGraphQLLanguageUIProjectService.JS_GRAPH_QL_ENDPOINTS_MODEL);
+            final JSGraphQLEndpointsModel endpointsModel = editor.getUserData(GraphQLUIProjectService.GRAPH_QL_ENDPOINTS_MODEL);
             if (endpointsModel == null || endpointsModel.getSelectedItem() == null) {
                 e.getPresentation().setEnabled(false);
             } else {
@@ -56,7 +56,7 @@ public class JSGraphQLToggleVariablesAction extends ToggleAction {
         final Editor variablesEditor = getVariablesEditor(e);
         if (variablesEditor != null) {
 
-            final Editor queryEditor = variablesEditor.getUserData(JSGraphQLLanguageUIProjectService.GRAPH_QL_QUERY_EDITOR);
+            final Editor queryEditor = variablesEditor.getUserData(GraphQLUIProjectService.GRAPH_QL_QUERY_EDITOR);
             if(queryEditor == null) {
                 // not linked to a query editor
                 return;
@@ -86,7 +86,7 @@ public class JSGraphQLToggleVariablesAction extends ToggleAction {
     private Editor getVariablesEditor(AnActionEvent e) {
         final Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
         if (editor != null) {
-            final Editor variablesEditor = editor.getUserData(JSGraphQLLanguageUIProjectService.GRAPH_QL_VARIABLES_EDITOR);
+            final Editor variablesEditor = editor.getUserData(GraphQLUIProjectService.GRAPH_QL_VARIABLES_EDITOR);
             return variablesEditor != null ? variablesEditor : editor;
         }
         return null;

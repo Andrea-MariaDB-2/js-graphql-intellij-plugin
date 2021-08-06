@@ -15,10 +15,12 @@ import com.intellij.lang.jsgraphql.psi.*;
 import com.intellij.lang.jsgraphql.psi.impl.GraphQLDirectiveImpl;
 import com.intellij.lang.jsgraphql.psi.impl.GraphQLFieldImpl;
 import com.intellij.lang.jsgraphql.psi.impl.GraphQLReferenceMixin;
+import com.intellij.lang.jsgraphql.schema.GraphQLExternalTypeDefinitionsProvider;
 import com.intellij.lang.jsgraphql.schema.GraphQLSchemaUtil;
 import com.intellij.lang.jsgraphql.types.schema.GraphQLType;
 import com.intellij.lang.jsgraphql.v1.schema.ide.type.JSGraphQLNamedType;
 import com.intellij.lang.jsgraphql.v1.schema.ide.type.JSGraphQLPropertyType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -37,10 +39,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public class GraphQLReferenceService {
+public class GraphQLReferenceService implements Disposable {
 
     private final Map<String, PsiReference> logicalTypeNameToReference = Maps.newConcurrentMap();
-    private final GraphQLPsiSearchHelper psiSearchHelper;
+    private final GraphQLPsiSearchHelper myPsiSearchHelper;
+    private final GraphQLExternalTypeDefinitionsProvider myExternalTypeDefinitionsProvider;
 
     /**
      * Sentinel reference for use in concurrent maps which don't allow nulls
@@ -63,8 +66,10 @@ public class GraphQLReferenceService {
     }
 
     public GraphQLReferenceService(@NotNull final Project project) {
-        psiSearchHelper = GraphQLPsiSearchHelper.getInstance(project);
-        project.getMessageBus().connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+        myPsiSearchHelper = GraphQLPsiSearchHelper.getInstance(project);
+        myExternalTypeDefinitionsProvider = GraphQLExternalTypeDefinitionsProvider.getInstance(project);
+
+        project.getMessageBus().connect(this).subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
             @Override
             public void beforePsiChanged(boolean isPhysical) {
                 // clear the cache on each PSI change
@@ -214,7 +219,7 @@ public class GraphQLReferenceService {
             final GraphQLPsiSearchHelper graphQLPsiSearchHelper = GraphQLPsiSearchHelper.getInstance(element.getProject());
             if (name.startsWith("__")) {
                 // __typename or introspection fields __schema and __type which implicitly extends the query root type
-                graphQLPsiSearchHelper.getBuiltInSchema().accept(new PsiRecursiveElementVisitor() {
+                myExternalTypeDefinitionsProvider.getBuiltInSchema().accept(new PsiRecursiveElementVisitor() {
                     @Override
                     public void visitElement(final @NotNull PsiElement schemaElement) {
                         if (schemaElement instanceof GraphQLReferenceMixin && schemaElement.getText().equals(name)) {
@@ -425,7 +430,7 @@ public class GraphQLReferenceService {
         final String name = element.getName();
         Ref<PsiReference> reference = new Ref<>();
         if (name != null) {
-            psiSearchHelper.processElementsWithWord(element, name, psiNamedElement -> {
+            myPsiSearchHelper.processElementsWithWord(element, name, psiNamedElement -> {
                 ProgressManager.checkCanceled();
                 if (isMatch.test(psiNamedElement)) {
                     reference.set(new PsiReferenceBase<PsiNamedElement>(element, TextRange.from(0, element.getTextLength())) {
@@ -447,5 +452,9 @@ public class GraphQLReferenceService {
             });
         }
         return reference.get();
+    }
+
+    @Override
+    public void dispose() {
     }
 }

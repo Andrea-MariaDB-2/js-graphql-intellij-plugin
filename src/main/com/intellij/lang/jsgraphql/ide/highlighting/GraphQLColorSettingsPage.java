@@ -7,7 +7,8 @@
  */
 package com.intellij.lang.jsgraphql.ide.highlighting;
 
-import com.intellij.lang.jsgraphql.GraphQLIcons;
+import com.intellij.lang.jsgraphql.GraphQLConstants;
+import com.intellij.lang.jsgraphql.icons.GraphQLIcons;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -36,6 +37,7 @@ public class GraphQLColorSettingsPage implements ColorSettingsPage {
       new AttributesDescriptor("Type name", GraphQLSyntaxAnnotator.TYPE_NAME),
       new AttributesDescriptor("Constant", GraphQLSyntaxAnnotator.CONSTANT),
       new AttributesDescriptor("Directive", GraphQLSyntaxAnnotator.DIRECTIVE),
+      new AttributesDescriptor("Unused fragment", GraphQLSyntaxAnnotator.UNUSED_FRAGMENT),
   };
 
   private static final Map<String, TextAttributesKey> TAG_TO_DESCRIPTOR_MAP = new HashMap<>();
@@ -97,21 +99,20 @@ public class GraphQLColorSettingsPage implements ColorSettingsPage {
     return TAG_TO_DESCRIPTOR_MAP;
   }
 
-  @NotNull
   @Override
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return DESCRIPTORS;
   }
 
   @NotNull
   @Override
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
   @NotNull
   @Override
   public String getDisplayName() {
-    return "GraphQL";
+    return GraphQLConstants.GraphQL;
   }
 }

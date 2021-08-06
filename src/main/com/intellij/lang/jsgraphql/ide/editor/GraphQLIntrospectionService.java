@@ -15,6 +15,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.jsgraphql.GraphQLBundle;
 import com.intellij.lang.jsgraphql.GraphQLSettings;
 import com.intellij.lang.jsgraphql.ide.notifications.GraphQLNotificationUtil;
+import com.intellij.lang.jsgraphql.ide.project.GraphQLUIProjectService;
 import com.intellij.lang.jsgraphql.ide.project.graphqlconfig.GraphQLConfigManager;
 import com.intellij.lang.jsgraphql.ide.project.graphqlconfig.model.GraphQLConfigEndpoint;
 import com.intellij.lang.jsgraphql.ide.project.graphqlconfig.model.GraphQLConfigVariableAwareEndpoint;
@@ -32,7 +33,6 @@ import com.intellij.lang.jsgraphql.types.schema.idl.SchemaPrinter;
 import com.intellij.lang.jsgraphql.types.schema.idl.UnExecutableSchemaGenerator;
 import com.intellij.lang.jsgraphql.types.schema.idl.errors.SchemaProblem;
 import com.intellij.lang.jsgraphql.types.util.EscapeUtil;
-import com.intellij.lang.jsgraphql.v1.ide.project.JSGraphQLLanguageUIProjectService;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -45,10 +45,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -59,10 +56,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.Consumer;
@@ -92,7 +86,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-import static com.intellij.lang.jsgraphql.v1.ide.project.JSGraphQLLanguageUIProjectService.setHeadersFromOptions;
+import static com.intellij.lang.jsgraphql.ide.project.GraphQLUIProjectService.setHeadersFromOptions;
 
 public class GraphQLIntrospectionService implements Disposable {
     private static final Logger LOG = Logger.getInstance(GraphQLIntrospectionService.class);
@@ -299,11 +293,7 @@ public class GraphQLIntrospectionService implements Disposable {
             }
         }
 
-        String sdl = sb.toString();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(sdl);
-        }
-        return sdl;
+        return sb.toString();
     }
 
     @SuppressWarnings("unchecked")
@@ -380,7 +370,7 @@ public class GraphQLIntrospectionService implements Disposable {
                     throw new IllegalArgumentException("unsupported output format: " + format);
             }
 
-            VirtualFile outputFile = createSchemaFile(introspectionSourceFile, FileUtil.toSystemIndependentName(outputFileName));
+            VirtualFile outputFile = createOrUpdateSchemaFile(introspectionSourceFile, FileUtil.toSystemIndependentName(outputFileName));
 
             final FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).openFile(outputFile, true, true);
             if (fileEditors.length == 0) {
@@ -422,8 +412,8 @@ public class GraphQLIntrospectionService implements Disposable {
     }
 
     @NotNull
-    private VirtualFile createSchemaFile(@NotNull VirtualFile introspectionSourceFile,
-                                         @NotNull String relativeOutputFileName) throws IOException {
+    private VirtualFile createOrUpdateSchemaFile(@NotNull VirtualFile introspectionSourceFile,
+                                                 @NotNull String relativeOutputFileName) throws IOException {
         VirtualFile outputFile = introspectionSourceFile.getParent().findFileByRelativePath(relativeOutputFileName);
         if (outputFile == null) {
             outputFile = WriteAction.compute(() -> {
@@ -482,8 +472,8 @@ public class GraphQLIntrospectionService implements Disposable {
             Map<String, Object> introspection;
             try {
                 introspection = parseIntrospectionJson(responseJson);
-                if (getErrorCount(introspection) > 0) {
-                    JSGraphQLLanguageUIProjectService.getService(myProject).showQueryResult(responseJson);
+                if (getErrorCount(introspection) > 0 && myProject != null) {
+                    GraphQLUIProjectService.getService(myProject).showQueryResult(responseJson);
                 }
             } catch (JsonSyntaxException exception) {
                 handleIntrospectionError(exception, GraphQLBundle.message("graphql.notification.introspection.parse.error"), responseJson);
@@ -539,7 +529,9 @@ public class GraphQLIntrospectionService implements Disposable {
 
             Notifications.Bus.notify(notification, myProject);
 
-            JSGraphQLLanguageUIProjectService.getService(myProject).showQueryResult(responseJson);
+            if (myProject != null) {
+                GraphQLUIProjectService.getService(myProject).showQueryResult(responseJson);
+            }
         }
     }
 }

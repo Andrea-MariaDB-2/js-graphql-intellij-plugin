@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (c) 2015-present, Jim Kynde Meyer
  *  All rights reserved.
  *
@@ -12,7 +12,7 @@ import javax.swing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.intellij.lang.jsgraphql.icons.JSGraphQLIcons;
+import com.intellij.lang.jsgraphql.icons.GraphQLIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 
 public class JSGraphQLEndpointFileType extends LanguageFileType {
@@ -44,6 +44,6 @@ public class JSGraphQLEndpointFileType extends LanguageFileType {
     @Nullable
     @Override
     public Icon getIcon() {
-        return JSGraphQLIcons.Files.GraphQLSchema;
+        return GraphQLIcons.Files.GraphQLSchema;
     }
 }
